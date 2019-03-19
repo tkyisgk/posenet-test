@@ -10,7 +10,7 @@
 
       <DrawLine />
 
-      <div class="errors" v-if="isError">両目が映っておりません。</div>
+      <div class="msgs" v-if="isMsg">{{ isMsg }}</div>
     </div>
 
     <div class="actions">
@@ -18,7 +18,7 @@
         type="button"
         class="button"
         @click="handleImgChange()"
-      >別の画像にする</button>
+      >Try again</button>
     </div>
   </div>
 </template>
@@ -37,7 +37,7 @@ export default {
     return {
       targetImg: '',
       targetParts: ['leftEye', 'rightEye'],
-      isError: false
+      isMsg: ''
     }
   },
   mounted() {
@@ -49,17 +49,18 @@ export default {
 
       const points = []
 
-      keypoints.forEach(keypoint => {
-        this.targetParts.forEach(part => {
-          if (keypoint.part === part) {
-            if (keypoint.score < 0.1) {
-              this.isError = true
+      for (let i = 0; i < keypoints.length; i++) {
+        for (let j = 0; j < this.targetParts.length; j++) {
+          if (keypoints[i].part === this.targetParts[j]) {
+            if (keypoints[i].score < 0.1) {
+              this.isMsg = 'I can not recognize your eyes.'
               return
             }
-            points.push(keypoint.position)
+            points.push(keypoints[i].position)
           }
-        })
-      })
+        }
+      }
+      this.isMsg = null
       this.$store.commit('updateCanvas', points)
     },
     async estimatePoseOnImage(imageElement) {
@@ -69,11 +70,10 @@ export default {
     },
     async initTensor() {
       const pose = await this.estimatePoseOnImage(this.$refs.img)
-      console.log(pose)
       this.setLineData(pose.keypoints)
     },
     getImg() {
-      this.isError = false
+      this.isMsg = 'Under analysis...'
       this.targetImg = 'https://source.unsplash.com/featured/600x400?face'
       this.$imageOnLoad(this.targetImg, () => {
         this.initTensor()
@@ -100,10 +100,16 @@ export default {
 img {
   display: block;
   width: 100%;
-  height: 400px;
+  min-height: 400px;
 }
 
-.errors {
+@media screen and (max-width: 600px) {
+  img {
+    min-height: calc(100vw * 2 / 3);
+  }
+}
+
+.msgs {
   position: absolute;
   bottom: 0;
   left: 0;

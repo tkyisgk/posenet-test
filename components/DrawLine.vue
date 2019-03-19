@@ -1,7 +1,5 @@
 <template>
   <canvas
-    width="600"
-    height="400"
     ref="canvas"
   ></canvas>
 </template>
@@ -32,8 +30,13 @@ export default {
       const canvas = this.$refs.canvas
       if (!canvas || !canvas.getContext) return
 
-      // canvas.width = 600
-      // canvas.height = 400
+      if (window.innerWidth >= 600) {
+        canvas.width = 600
+        canvas.height = 400
+      } else {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerWidth * (2 / 3)
+      }
 
       const ctx = canvas.getContext('2d')
       ctx.lineWidth = this.lineWidth
